@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <title>Tolkning av Inndata i Sanntid</title>
+    <!-- Inkluder math.js for matematisk parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.min.js"></script>
+    <!-- Inkluder MathJax for å vise LaTeX -->
+    <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['\\(','\\)']],
+        displayMath: [['\\[','\\]']],
+        processEscapes: true,
+      },
+      svg: {
+        fontCache: 'global'
+      }
+    };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+<h1>Tolkning av Inndata i Sanntid</h1>
+
+<div>
+    <label for="f">Differensialligning \( y' = f(t, y) \): </label>
+    <input type="text" id="f" value="-2*t*y" style="width: 300px;" oninput="updateParsedExpressions()">
+</div>
+<br>
+<div>
+    <label>Tolket \( f(t, y) \): </label>
+    <span id="parsed_f" style="font-weight: bold;"></span>
+</div>
+<br>
+<div>
+    <label for="exact">Eksakt løsning \( y(t) \): </label>
+    <input type="text" id="exact" value="e^(-t^2)" style="width: 300px;" oninput="updateParsedExpressions()">
+</div>
+<br>
+<div>
+    <label>Tolket \( y(t) \): </label>
+    <span id="parsed_exact" style="font-weight: bold;"></span>
+</div>
+
+<script>
+// Funksjon for å oppdatere tolket inndata i sanntid
+function updateParsedExpressions() {
+    const fInput = document.getElementById('f').value;
+    const exactInput = document.getElementById('exact').value;
+
+    // Formater inndataene for visning med MathJax
+    const formatted_f = formatExpressionForMathJax(fInput);
+    const formatted_exact = formatExpressionForMathJax(exactInput);
+
+    // Vis inndataene formatert med MathJax
+    document.getElementById('parsed_f').innerHTML = `\\( ${formatted_f} \\)`;
+    document.getElementById('parsed_exact').innerHTML = `\\( ${formatted_exact} \\)`;
+
+    // Be MathJax renderere uttrykkene
+    MathJax.typesetPromise();
+}
+
+// Funksjon for å formatere uttrykk for visning med MathJax
+function formatExpressionForMathJax(expr) {
+    // Lag en kopi av uttrykket
+    let formatted = expr;
+
+    // Erstatt matematiske funksjoner med LaTeX-ekvivalenter
+    formatted = formatted.replace(/sqrt\(/g, '\\sqrt{');
+    formatted = formatted.replace(/abs\(/g, '\\left|');
+    formatted = formatted.replace(/sin\(/g, '\\sin\\left(');
+    formatted = formatted.replace(/cos\(/g, '\\cos\\left(');
+    formatted = formatted.replace(/tan\(/g, '\\tan\\left(');
+    formatted = formatted.replace(/exp\(/g, '\\exp\\left(');
+    formatted = formatted.replace(/log\(/g, '\\ln\\left(');
+
+    // Håndter e^()
+    formatted = formatted.replace(/e\^\(/g, 'e^{');
+    formatted = formatted.replace(/e\^([^{])/g, 'e^{\$1');
+
+    // Håndter potensiering med ^
+    formatted = formatted.replace(/([^\^])\^([^\^])/g, '\$1^{\$2}');
+
+    // Håndter multiplikasjonstegnet '*'
+    formatted = formatted.replace(/\*/g, '\\cdot ');
+
+    // Håndter divisjon '/'
+    formatted = formatted.replace(/\//g, '\\div ');
+
+    // Legg til avsluttende klammer for funksjoner og eksponenter
+    let openBraces = (formatted.match(/{/g) || []).length;
+    let closeBraces = (formatted.match(/}/g) || []).length;
+    for (let i = 0; i < openBraces - closeBraces; i++) {
+        formatted += '}';
+    }
+
+    // Håndter parenteser
+    let openParens = (formatted.match(/\(/g) || []).length;
+    let closeParens = (formatted.match(/\)/g) || []).length;
+    for (let i = 0; i < openParens - closeParens; i++) {
+        formatted += ')';
+    }
+
+    return formatted;
+}
+
+// Initialiser MathJax rendering
+updateParsedExpressions();
+</script>
+
+</body>
+</html>
