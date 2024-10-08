@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <title>Runge-Kutta Kalkulator</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+
+<h1>Runge-Kutta (RK4) Kalkulator</h1>
+
+<div>
+    <label for="f">Differensialligning y' = f(t, y): </label>
+    <input type="text" id="f" value="-2*t*y" style="width: 200px;">
+</div>
+<br>
+<div>
+    <label for="exact">Eksakt løsning y(t): </label>
+    <input type="text" id="exact" value="Math.exp(-t*t)" style="width: 200px;">
+</div>
+<br>
+<div>
+    <label for="t0">Starttidspunkt t₀: </label>
+    <input type="number" id="t0" value="0">
+</div>
+<br>
+<div>
+    <label for="y0">Startverdi y₀: </label>
+    <input type="number" id="y0" value="1">
+</div>
+<br>
+<div>
+    <label for="start">Start av t-intervallet: </label>
+    <input type="number" id="start" value="0">
+</div>
+<br>
+<div>
+    <label for="end">Slutt av t-intervallet: </label>
+    <input type="number" id="end" value="2">
+</div>
+<br>
+<div>
+    <label for="n_steps">Antall steg n: </label>
+    <input type="number" id="n_steps" value="1000">
+</div>
+<br>
+<button onclick="computeAndPlot()">Kjør Beregning</button>
+
+<div id="plot"></div>
+
+<script>
+function computeAndPlot() {
+    // Hent brukerinput
+    const fInput = document.getElementById('f').value;
+    const exactInput = document.getElementById('exact').value;
+    const t0 = parseFloat(document.getElementById('t0').value);
+    const y0 = parseFloat(document.getElementById('y0').value);
+    const start = parseFloat(document.getElementById('start').value);
+    const end = parseFloat(document.getElementById('end').value);
+    const n_steps = parseInt(document.getElementById('n_steps').value);
+
+    // Definer funksjonen f(t, y)
+    const f = Function('t', 'y', 'return ' + fInput + ';');
+
+    // Definer eksakt løsning
+    const exact_solution = Function('t', 'return ' + exactInput + ';');
+
+    // Beregn skrittlengde h
+    const h = (1 / n_steps) * (end - start);
+
+    // Initier lister
+    let t_values = [t0];
+    let y_values = [y0];
+    let exact_values = [exact_solution(t0)];
+
+    // Runge-Kutta funksjon
+    function runge_kutta(f, tn, yn, h) {
+        const k1 = f(tn, yn);
+        const k2 = f(tn + h / 2, yn + (h / 2) * k1);
+        const k3 = f(tn + h / 2, yn + (h / 2) * k2);
+        const k4 = f(tn + h, yn + h * k3);
+
+        return yn + (h / 6) * (k1 + 2 * k2 + 2 * k3 + k4);
+    }
+
+    // Beregningsloop
+    let t = t0;
+    let y = y0;
+    for (let i = 0; i < n_steps; i++) {
+        y = runge_kutta(f, t, y, h);
+        t += h;
+        t_values.push(t);
+        y_values.push(y);
+        exact_values.push(exact_solution(t));
+    }
+
+    // Plotting med Plotly.js
+    const trace1 = {
+        x: t_values,
+        y: y_values,
+        mode: 'lines',
+        name: 'Runge-Kutta Approksimasjon (RK4)',
+        line: { color: 'blue' }
+    };
+
+    const trace2 = {
+        x: t_values,
+        y: exact_values,
+        mode: 'lines',
+        name: 'Eksakt Løsning',
+        line: { dash: 'dash', color: 'green' }
+    };
+
+    const data = [trace1, trace2];
+
+    const layout = {
+        title: "Sammenligning av Runge-Kutta (RK4) og Eksakt Løsning",
+        xaxis: { title: 'Tid (t)' },
+        yaxis: { title: 'y(t)' },
+        legend: { x: 0, y: 1 },
+        margin: { t: 50 }
+    };
+
+    Plotly.newPlot('plot', data, layout);
+}
+</script>
+
+</body>
+</html>
