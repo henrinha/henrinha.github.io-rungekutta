@@ -128,11 +128,18 @@ function formatExpressionForMathJax(expr) {
     formatted = formatted.replace(/log\(/g, '\\ln\\left(');
 
     // Håndter e^()
-    formatted = formatted.replace(/e\^\(/g, 'e^{');
-    formatted = formatted.replace(/e\^([^{])/g, 'e^{\$1}');
+    //formatted = formatted.replace(/e\^\(/g, 'e^{');
+    //formatted = formatted.replace(/e\^([^{])/g, 'e^{\$1}');
 
     // Håndter potensiering med ^
-    formatted = formatted.replace(/([^\^])\^([^\^])/g, '\$1^{\$2}');
+    //formatted = formatted.replace(/([^\^])\^([^\^])/g, '\$1^{\$2}');
+
+    // Håndter e^() mer presist
+    formatted = formatted.replace(/e\^\((.*?)\)/g, 'e^{$1}');  // Håndterer hele uttrykket innenfor parentesene korrekt
+
+    // Håndter potensiering med ^ mer presist
+    formatted = formatted.replace(/(\w)\^\((.*?)\)/g, '$1^{$2}');  // Håndterer variabler etterfulgt av eksponent med parenteser
+
 
     // Håndter multiplikasjonstegnet '*'
     formatted = formatted.replace(/\*/g, '\\cdot ');

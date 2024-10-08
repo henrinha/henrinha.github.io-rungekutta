@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>Runge-Kutta Kalkulator med Feilanalyse</title>
+    <!-- Inkluder Bootstrap CSS for styling -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <!-- Inkluder Plotly.js for plotting -->
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <!-- Inkluder math.js for matematisk parsing -->
@@ -21,79 +23,113 @@
     };
     </script>
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        h1, h2 {
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        .card {
+            margin-bottom: 20px;
+        }
+        #plot, #error_plot {
+            margin-top: 40px;
+        }
+        .math-display {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        .footer-note {
+            margin-top: 40px;
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+    </style>
 </head>
 <body>
 
-<h1>Runge-Kutta (RK4) Kalkulator med Feilanalyse</h1>
+<div class="container">
+    <h1 class="text-center">Runge-Kutta (RK4) Kalkulator med Feilanalyse</h1>
 
-<div>
-    <label for="f">Differensialligning \( y' = f(t, y) \): </label>
-    <input type="text" id="f" value="-2*t*y" style="width: 300px;" oninput="updateParsedExpressions()">
-</div>
-<br>
-<div>
-    <label>Tolket \( f(t, y) \): </label>
-    <span id="parsed_f" style="font-weight: bold;"></span>
-</div>
-<br>
-<div>
-    <label for="exact">Eksakt løsning \( y(t) \): </label>
-    <input type="text" id="exact" value="e^(-t^2)" style="width: 300px;" oninput="updateParsedExpressions()">
-</div>
-<br>
-<div>
-    <label>Tolket \( y(t) \): </label>
-    <span id="parsed_exact" style="font-weight: bold;"></span>
-</div>
-<br>
-<div>
-    <label for="t0">Starttidspunkt \( t_0 \): </label>
-    <input type="number" id="t0" value="0">
-</div>
-<br>
-<div>
-    <label for="y0">Startverdi \( y_0 \): </label>
-    <input type="number" id="y0" value="1">
-</div>
-<br>
-<div>
-    <label for="start">Start av t-intervallet: </label>
-    <input type="number" id="start" value="0">
-</div>
-<br>
-<div>
-    <label for="end">Slutt av t-intervallet: </label>
-    <input type="number" id="end" value="2">
-</div>
-<br>
-<div>
-    <label for="n_steps">Antall steg \( n \): </label>
-    <input type="number" id="n_steps" value="1000">
-</div>
-<br>
-<button onclick="computeAndPlot()">Kjør Beregning</button>
+    <div class="card">
+        <div class="card-header">
+            <h4>Inndata</h4>
+        </div>
+        <div class="card-body">
+            <form>
+                <div class="form-group">
+                    <label for="f">Differensialligning \( y' = f(t, y) \):</label>
+                    <input type="text" class="form-control" id="f" value="-2*t*y" oninput="updateParsedExpressions()">
+                    <small id="parsed_f" class="form-text text-muted math-display"></small>
+                </div>
+                <div class="form-group">
+                    <label for="exact">Eksakt løsning \( y(t) \):</label>
+                    <input type="text" class="form-control" id="exact" value="e^(-t^2)" oninput="updateParsedExpressions()">
+                    <small id="parsed_exact" class="form-text text-muted math-display"></small>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-3">
+                        <label for="t0">Starttidspunkt \( t_0 \):</label>
+                        <input type="number" class="form-control" id="t0" value="0">
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label for="y0">Startverdi \( y_0 \):</label>
+                        <input type="number" class="form-control" id="y0" value="1">
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label for="start">Start av t-intervallet:</label>
+                        <input type="number" class="form-control" id="start" value="0">
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label for="end">Slutt av t-intervallet:</label>
+                        <input type="number" class="form-control" id="end" value="2">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="n_steps">Antall steg \( n \):</label>
+                    <input type="number" class="form-control" id="n_steps" value="1000">
+                </div>
+                <button type="button" class="btn btn-primary btn-block" onclick="computeAndPlot()">Kjør Beregning</button>
+            </form>
+        </div>
+    </div>
 
-<h2>Resultater</h2>
-<div id="plot"></div>
-<div id="error_plot"></div>
-<div id="slope"></div>
+    <h2>Resultater</h2>
+    <div id="plot"></div>
+    <div id="error_plot"></div>
+    <div id="slope" class="alert alert-info text-center" role="alert"></div>
 
-<h2>Hvordan fungerer Runge-Kutta-metoden?</h2>
-<p>
-Runge-Kutta 4. ordens metode (RK4) er en numerisk metode for å løse ordinære differensialligninger av formen \( y' = f(t, y) \). Den estimerer løsningen ved å kombinere flere skridt innenfor hvert tidssteg for å oppnå høyere nøyaktighet.
-</p>
-<ol>
-    <li><strong>Startverdier:</strong> Vi starter med kjente verdier \( t_n \) og \( y_n \).</li>
-    <li><strong>Beregn \( k_1 \):</strong> \( k_1 = f(t_n, y_n) \)</li>
-    <li><strong>Beregn \( k_2 \):</strong> \( k_2 = f\left(t_n + \frac{h}{2}, y_n + \frac{h}{2}k_1\right) \)</li>
-    <li><strong>Beregn \( k_3 \):</strong> \( k_3 = f\left(t_n + \frac{h}{2}, y_n + \frac{h}{2}k_2\right) \)</li>
-    <li><strong>Beregn \( k_4 \):</strong> \( k_4 = f(t_n + h, y_n + h k_3) \)</li>
-    <li><strong>Oppdatering:</strong> \( y_{n+1} = y_n + \frac{h}{6}(k_1 + 2k_2 + 2k_3 + k_4) \)</li>
-    <li><strong>Neste steg:</strong> Øk \( t_n \) med \( h \) og gjenta prosessen.</li>
-</ol>
-<p>
-Denne metoden gir en god balanse mellom nøyaktighet og beregningskostnad, og er mye brukt i praksis.
-</p>
+    <div class="card">
+        <div class="card-header">
+            <h4>Hvordan fungerer Runge-Kutta-metoden?</h4>
+        </div>
+        <div class="card-body">
+            <p>
+                Runge-Kutta 4. ordens metode (RK4) er en numerisk metode for å løse ordinære differensialligninger av formen \( y' = f(t, y) \). Den estimerer løsningen ved å kombinere flere skridt innenfor hvert tidssteg for å oppnå høyere nøyaktighet.
+            </p>
+            <ol>
+                <li><strong>Startverdier:</strong> Vi starter med kjente verdier \( t_n \) og \( y_n \).</li>
+                <li><strong>Beregn \( k_1 \):</strong> \( k_1 = f(t_n, y_n) \)</li>
+                <li><strong>Beregn \( k_2 \):</strong> \( k_2 = f\left(t_n + \frac{h}{2}, y_n + \frac{h}{2}k_1\right) \)</li>
+                <li><strong>Beregn \( k_3 \):</strong> \( k_3 = f\left(t_n + \frac{h}{2}, y_n + \frac{h}{2}k_2\right) \)</li>
+                <li><strong>Beregn \( k_4 \):</strong> \( k_4 = f(t_n + h, y_n + h k_3) \)</li>
+                <li><strong>Oppdatering:</strong> \( y_{n+1} = y_n + \frac{h}{6}(k_1 + 2k_2 + 2k_3 + k_4) \)</li>
+                <li><strong>Neste steg:</strong> Øk \( t_n \) med \( h \) og gjenta prosessen.</li>
+            </ol>
+            <p>
+                Denne metoden gir en god balanse mellom nøyaktighet og beregningskostnad, og er mye brukt i praksis.
+            </p>
+        </div>
+    </div>
+
+    <p class="footer-note text-center">Utviklet av Haaland Consulting, org.nr 931 672 983.</p>
+</div>
+
+<!-- Inkluder Bootstrap JS og avhengigheter -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
 // Funksjon for å oppdatere tolket inndata i sanntid
@@ -128,18 +164,10 @@ function formatExpressionForMathJax(expr) {
     formatted = formatted.replace(/log\(/g, '\\ln\\left(');
 
     // Håndter e^()
-    //formatted = formatted.replace(/e\^\(/g, 'e^{');
-    //formatted = formatted.replace(/e\^([^{])/g, 'e^{\$1}');
-
-    // Håndter potensiering med ^
-    //formatted = formatted.replace(/([^\^])\^([^\^])/g, '\$1^{\$2}');
-
-    // Håndter e^() mer presist
     formatted = formatted.replace(/e\^\((.*?)\)/g, 'e^{$1}');  // Håndterer hele uttrykket innenfor parentesene korrekt
 
     // Håndter potensiering med ^ mer presist
     formatted = formatted.replace(/(\w)\^\((.*?)\)/g, '$1^{$2}');  // Håndterer variabler etterfulgt av eksponent med parenteser
-
 
     // Håndter multiplikasjonstegnet '*'
     formatted = formatted.replace(/\*/g, '\\cdot ');
@@ -303,7 +331,7 @@ function computeAndPlot() {
     const slope = regression.slope.toFixed(2);
 
     // Vis konvergensordren
-    document.getElementById('slope').innerHTML = `<h3>Konvergensordren er tilnærmet lik ${slope} (bør være nær 4.00 for RK4)</h3>`;
+    document.getElementById('slope').innerHTML = `<strong>Konvergensordren er tilnærmet lik ${slope} (bør være nær 4.00 for RK4)</strong>`;
 
     // Plotting av feil vs h
     const error_trace = {
