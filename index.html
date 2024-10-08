@@ -2,12 +2,12 @@
 <html lang="no">
 <head>
     <meta charset="UTF-8">
-    <title>Runge-Kutta Kalkulator</title>
+    <title>Runge-Kutta Kalkulator med Feilanalyse</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body>
 
-<h1>Runge-Kutta (RK4) Kalkulator</h1>
+<h1>Runge-Kutta (RK4) Kalkulator med Feilanalyse</h1>
 
 <div>
     <label for="f">Differensialligning y' = f(t, y): </label>
@@ -46,7 +46,10 @@
 <br>
 <button onclick="computeAndPlot()">Kjør Beregning</button>
 
+<h2>Resultater</h2>
 <div id="plot"></div>
+<div id="error_plot"></div>
+<div id="slope"></div>
 
 <script>
 function computeAndPlot() {
@@ -86,7 +89,7 @@ function computeAndPlot() {
     // Beregningsloop
     let t = t0;
     let y = y0;
-    for (let i = 0; i < n_steps; i++) {
+    while (t < end) {
         y = runge_kutta(f, t, y, h);
         t += h;
         t_values.push(t);
@@ -94,7 +97,7 @@ function computeAndPlot() {
         exact_values.push(exact_solution(t));
     }
 
-    // Plotting med Plotly.js
+    // Plotting av løsninger
     const trace1 = {
         x: t_values,
         y: y_values,
@@ -122,6 +125,80 @@ function computeAndPlot() {
     };
 
     Plotly.newPlot('plot', data, layout);
+
+    // Feilanalyse
+    // Definer ulike skrittlengder h
+    const h_values = [];
+    for (let x = 2; x <= 10; x++) {
+        h_values.push(1 / (2 * Math.pow(2, x)));
+    }
+
+    const errors = [];
+
+    for (let h of h_values) {
+        let t = t0;
+        let y = y0;
+        const stop_time = 1; // Vi vil ha feilen ved t = 1
+        const n_steps = Math.ceil((stop_time - t0) / h);
+
+        for (let i = 0; i < n_steps; i++) {
+            y = runge_kutta(f, t, y, h);
+            t += h;
+            if (t >= stop_time) {
+                break;
+            }
+        }
+
+        const estimated_y_at_1 = y;
+        const exact_y_at_1 = exact_solution(1);
+        const error = Math.abs(exact_y_at_1 - estimated_y_at_1);
+        errors.push(error);
+    }
+
+    // Logaritmer av h og feil
+    const log_h = h_values.map(h => Math.log(h));
+    const log_errors = errors.map(err => Math.log(err));
+
+    // Lineær regresjon for å finne konvergensordren
+    function linearRegression(x, y) {
+        const n = x.length;
+        const sum_x = x.reduce((a, b) => a + b, 0);
+        const sum_y = y.reduce((a, b) => a + b, 0);
+        const sum_xy = x.reduce((sum, xi, i) => sum + xi * y[i], 0);
+        const sum_xx = x.reduce((sum, xi) => sum + xi * xi, 0);
+
+        const slope = (n * sum_xy - sum_x * sum_y) / (n * sum_xx - sum_x * sum_x);
+        const intercept = (sum_y - slope * sum_x) / n;
+
+        return { slope: slope, intercept: intercept };
+    }
+
+    const regression = linearRegression(log_h, log_errors);
+    const slope = regression.slope.toFixed(2);
+
+    // Vis konvergensordren
+    document.getElementById('slope').innerHTML = `<h3>Konvergensordren er tilnærmet lik ${slope} (bør være nær 4.00 for RK4)</h3>`;
+
+    // Plotting av feil vs h
+    const error_trace = {
+        x: h_values,
+        y: errors,
+        mode: 'markers+lines',
+        name: 'Absolutt feil ved t = 1',
+        marker: { color: 'red' },
+        line: { color: 'red' }
+    };
+
+    const error_data = [error_trace];
+
+    const error_layout = {
+        title: 'Logaritmisk Plott av Feil ved t = 1 for Ulike Skrittlengder',
+        xaxis: { title: 'Skrittlengde h', type: 'log' },
+        yaxis: { title: 'Absolutt Feil ved t = 1', type: 'log' },
+        margin: { t: 50 }
+    };
+
+    Plotly.newPlot('error_plot', error_data, error_layout);
 }
 </script>
 
